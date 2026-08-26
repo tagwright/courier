@@ -2,11 +2,18 @@
 
 package beacon
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 func init() {
 	RegisterBackend("telegram", newTelegramBackendFromSettings)
 }
+
+// defaultTelegramAPIBase is Telegram's public Bot API host, used unless
+// "api_base" overrides it.
+const defaultTelegramAPIBase = "https://api.telegram.org"
 
 // telegramMessage is the JSON body Telegram's sendMessage endpoint expects.
 type telegramMessage struct {
@@ -17,13 +24,17 @@ type telegramMessage struct {
 // TelegramBackend sends notifications through a Telegram bot to a chat.
 type TelegramBackend struct {
 	chatID       string
+	apiBase      string
 	tokenSetting string
 	resolve      SecretResolver
 }
 
 // newTelegramBackendFromSettings builds the registered "telegram" backend.
-// Settings requires "chat_id". The secret "token_secret" names the bot
-// token, required and resolved at send time.
+// Settings requires "chat_id". The optional "api_base" overrides Telegram's
+// public Bot API host (default "https://api.telegram.org"); it exists so
+// tests can point this backend at a local catcher instead of the real
+// Telegram API, not for routing production traffic elsewhere. The secret
+// "token_secret" names the bot token, required and resolved at send time.
 func newTelegramBackendFromSettings(settings map[string]string, resolve SecretResolver) (Backend, error) {
 	chatID, err := requiredSetting(settings, "chat_id")
 	if err != nil {
@@ -32,8 +43,15 @@ func newTelegramBackendFromSettings(settings map[string]string, resolve SecretRe
 	if _, err := requiredSetting(settings, "token_secret"); err != nil {
 		return nil, err
 	}
+	apiBase := settings["api_base"]
+	if apiBase == "" {
+		apiBase = defaultTelegramAPIBase
+	} else {
+		apiBase = strings.TrimRight(apiBase, "/")
+	}
 	return &TelegramBackend{
 		chatID:       chatID,
+		apiBase:      apiBase,
 		tokenSetting: settings["token_secret"],
 		resolve:      resolve,
 	}, nil
@@ -58,7 +76,7 @@ func (b *TelegramBackend) Send(ctx context.Context, n Notification) error {
 		Text:   combineTitleBody(n),
 	}
 
-	target := "https://api.telegram.org/bot" + token + "/sendMessage"
+	target := b.apiBase + "/bot" + token + "/sendMessage"
 	_, err = postJSON(ctx, target, msg, nil)
 	return err
 }

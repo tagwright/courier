@@ -17,12 +17,16 @@ func init() {
 type PushoverBackend struct {
 	tokenSetting string
 	userSetting  string
+	endpoint     string
 	resolve      SecretResolver
 }
 
 // newPushoverBackendFromSettings builds the registered "pushover" backend.
 // The secrets "token_secret" (the application token) and "user_secret" (the
-// user or group key) are both required and resolved at send time.
+// user or group key) are both required and resolved at send time. The
+// optional "endpoint" overrides Pushover's public messages API URL; it
+// exists so tests can point this backend at a local catcher instead of the
+// real Pushover API, not for routing production traffic elsewhere.
 func newPushoverBackendFromSettings(settings map[string]string, resolve SecretResolver) (Backend, error) {
 	if _, err := requiredSetting(settings, "token_secret"); err != nil {
 		return nil, err
@@ -30,9 +34,14 @@ func newPushoverBackendFromSettings(settings map[string]string, resolve SecretRe
 	if _, err := requiredSetting(settings, "user_secret"); err != nil {
 		return nil, err
 	}
+	endpoint := settings["endpoint"]
+	if endpoint == "" {
+		endpoint = pushoverEndpoint
+	}
 	return &PushoverBackend{
 		tokenSetting: settings["token_secret"],
 		userSetting:  settings["user_secret"],
+		endpoint:     endpoint,
 		resolve:      resolve,
 	}, nil
 }
@@ -71,7 +80,7 @@ func (b *PushoverBackend) Send(ctx context.Context, n Notification) error {
 		form.Set("title", n.Title)
 	}
 
-	_, err = postForm(ctx, pushoverEndpoint, form, nil)
+	_, err = postForm(ctx, b.endpoint, form, nil)
 	return err
 }
 
