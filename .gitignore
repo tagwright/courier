@@ -1,0 +1,12 @@
+# Build output
+*.exe
+*.test
+*.out
+*.prof
+
+# Local dev
+.env
+*.local
+
+# Never commit decrypted secrets
+*.sops.decrypted
