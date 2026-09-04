@@ -10,3 +10,8 @@
 
 # Never commit decrypted secrets
 *.sops.decrypted
+
+# Internal project context lives in Nate's private projects-docs repo, not here.
+# docs/ stays public: it is user-facing library documentation.
+/CLAUDE.md
+/CHARTER.md
