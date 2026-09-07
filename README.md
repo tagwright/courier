@@ -16,7 +16,7 @@ will move until it settles.
 
 - Notifications: alerts to the channels people actually watch, including email,
   ntfy, Gotify, Telegram, Discord, Slack, Mattermost, Pushover, and Matrix, with a
-  generic webhook for anything else.
+  generic webhook or a templatable HTTP channel for anything else.
 - Telemetry: health and status push to a monitor, starting with Gatus external
   endpoints.
 
