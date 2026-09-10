@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-package beacon
+package courier
 
 import (
 	"context"
@@ -30,7 +30,7 @@ type webhookPayload struct {
 // WebhookBackend sends notifications as a JSON POST to an arbitrary URL,
 // for services with no dedicated backend of their own. If a signing secret
 // is configured, the request carries an X-Beacon-Signature header so the
-// receiver can verify it came from this beacon.
+// receiver can verify it came from this courier.
 type WebhookBackend struct {
 	urlSetting  string
 	signSetting string

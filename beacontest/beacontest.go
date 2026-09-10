@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-// Package beacontest provides Capture, a capturing beacon.Backend, and New, a
-// *beacon.Beacon wired to it. It is the notifier-side counterpart to
+// Package beacontest provides Capture, a capturing courier.Backend, and New, a
+// *courier.Beacon wired to it. It is the notifier-side counterpart to
 // core/runtime/runtimetest: where runtimetest lets a wiring test inject a
 // runtime failure, beacontest lets that same test assert the failure ALSO
 // fired the operator alert it is contracted to fire.
@@ -13,8 +13,8 @@
 // rule on every wiring test.
 //
 // It leaves beacon's exported API untouched: a capture registers as an ordinary
-// backend type and New builds an ordinary *beacon.Beacon through beacon.New, so
-// the code under test receives exactly the *beacon.Beacon it would in
+// backend type and New builds an ordinary *courier.Beacon through courier.New, so
+// the code under test receives exactly the *courier.Beacon it would in
 // production, with no test-only construction path bolted onto the library.
 package beacontest
 
@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 // backendType is the registered beacon backend type New wires up. It carries a
@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	beacon.RegisterBackend(backendType, func(settings map[string]string, _ beacon.SecretResolver) (beacon.Backend, error) {
+	courier.RegisterBackend(backendType, func(settings map[string]string, _ courier.SecretResolver) (courier.Backend, error) {
 		id := settings["id"]
 		mu.Lock()
 		c := captures[id]
@@ -50,24 +50,24 @@ func init() {
 	})
 }
 
-// Capture is a beacon.Backend that records every Notification it is sent, in
+// Capture is a courier.Backend that records every Notification it is sent, in
 // order, so a test can assert which alerts fired and at what level. Set SendErr
 // to make the channel itself fail, exercising how a caller handles a notify
 // error (a failure to alert is its own bug class).
 type Capture struct {
 	mu  sync.Mutex
-	got []beacon.Notification
+	got []courier.Notification
 
 	// SendErr, when set, is returned by every Send, simulating a channel that
 	// cannot deliver. The notification is still recorded first.
 	SendErr error
 }
 
-// Name identifies the backend, as beacon.Backend requires.
+// Name identifies the backend, as courier.Backend requires.
 func (c *Capture) Name() string { return backendType }
 
 // Send records n, then returns SendErr (nil unless the test set it).
-func (c *Capture) Send(_ context.Context, n beacon.Notification) error {
+func (c *Capture) Send(_ context.Context, n courier.Notification) error {
 	c.mu.Lock()
 	c.got = append(c.got, n)
 	err := c.SendErr
@@ -76,10 +76,10 @@ func (c *Capture) Send(_ context.Context, n beacon.Notification) error {
 }
 
 // Notifications returns a copy of every notification captured so far, in order.
-func (c *Capture) Notifications() []beacon.Notification {
+func (c *Capture) Notifications() []courier.Notification {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]beacon.Notification(nil), c.got...)
+	return append([]courier.Notification(nil), c.got...)
 }
 
 // Count returns how many notifications have been captured.
@@ -91,7 +91,7 @@ func (c *Capture) Count() int {
 
 // HighestLevel returns the most severe level among captured notifications, and
 // ok=false if none were captured.
-func (c *Capture) HighestLevel() (level beacon.Level, ok bool) {
+func (c *Capture) HighestLevel() (level courier.Level, ok bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if len(c.got) == 0 {
@@ -108,7 +108,7 @@ func (c *Capture) HighestLevel() (level beacon.Level, ok bool) {
 
 // FiredAtLevel reports whether any captured notification is at exactly level,
 // the "an Error-level alert fired" assertion in its simplest form.
-func (c *Capture) FiredAtLevel(level beacon.Level) bool {
+func (c *Capture) FiredAtLevel(level courier.Level) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, n := range c.got {
@@ -121,7 +121,7 @@ func (c *Capture) FiredAtLevel(level beacon.Level) bool {
 
 // Contains reports whether any captured notification at or above level has
 // substr in its Title or Body, for "an error alert mentioning X fired".
-func (c *Capture) Contains(level beacon.Level, substr string) bool {
+func (c *Capture) Contains(level courier.Level, substr string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, n := range c.got {
@@ -132,11 +132,11 @@ func (c *Capture) Contains(level beacon.Level, substr string) bool {
 	return false
 }
 
-// New builds a *beacon.Beacon that captures every notification at or above
-// minLevel into the returned Capture. Pass beacon.LevelInfo to capture all
-// levels. The returned Beacon is an ordinary one built through beacon.New, so
+// New builds a *courier.Beacon that captures every notification at or above
+// minLevel into the returned Capture. Pass courier.LevelInfo to capture all
+// levels. The returned Beacon is an ordinary one built through courier.New, so
 // the code under test cannot tell it from production.
-func New(minLevel beacon.Level) (*beacon.Beacon, *Capture) {
+func New(minLevel courier.Level) (*courier.Beacon, *Capture) {
 	c := &Capture{}
 
 	mu.Lock()
@@ -145,13 +145,13 @@ func New(minLevel beacon.Level) (*beacon.Beacon, *Capture) {
 	captures[id] = c
 	mu.Unlock()
 
-	b, err := beacon.New(beacon.Config{Channels: []beacon.ChannelConfig{{
+	b, err := courier.New(courier.Config{Channels: []courier.ChannelConfig{{
 		Type:     backendType,
 		MinLevel: minLevel,
 		Settings: map[string]string{"id": id},
 	}}}, nil)
 	if err != nil {
-		// The only way beacon.New fails here is an unregistered backend type,
+		// The only way courier.New fails here is an unregistered backend type,
 		// but this package's init registers it, so a failure is a bug in
 		// beacontest itself, not something a caller can cause.
 		panic("beacontest: building capture beacon: " + err.Error())

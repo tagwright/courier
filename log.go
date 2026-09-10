@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-package beacon
+package courier
 
 import (
 	"context"
@@ -35,7 +35,7 @@ func newLogBackendFromSettings(settings map[string]string, _ SecretResolver) (Ba
 // writes notifications either as plain lines to an io.Writer or as
 // structured records through log/slog, and depends on nothing outside the
 // standard library. It is registered under the type "log", and is the
-// floor every beacon.Config can fall back to when no other channel is
+// floor every courier.Config can fall back to when no other channel is
 // configured or reachable.
 type LogBackend struct {
 	out    io.Writer

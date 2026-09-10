@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-package beacon_test
+package courier_test
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
-// capSink is a capturing beacon.TelemetrySink: it records every Health it is
+// capSink is a capturing courier.TelemetrySink: it records every Health it is
 // Reported and, when err is set, fails delivery (recording the result first).
 // It is the telemetry-side counterpart to beacontest.Capture, kept local
 // because Beacon.Report fan-out is what these tests exercise and beacontest
@@ -22,13 +22,13 @@ import (
 type capSink struct {
 	mu   sync.Mutex
 	name string
-	got  []beacon.Health
+	got  []courier.Health
 	err  error // returned by Report when set; the result is still recorded
 }
 
 func (s *capSink) Name() string { return s.name }
 
-func (s *capSink) Report(_ context.Context, h beacon.Health) error {
+func (s *capSink) Report(_ context.Context, h courier.Health) error {
 	s.mu.Lock()
 	s.got = append(s.got, h)
 	err := s.err
@@ -42,16 +42,16 @@ func (s *capSink) count() int {
 	return len(s.got)
 }
 
-func (s *capSink) last() (beacon.Health, bool) {
+func (s *capSink) last() (courier.Health, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if len(s.got) == 0 {
-		return beacon.Health{}, false
+		return courier.Health{}, false
 	}
 	return s.got[len(s.got)-1], true
 }
 
-// capSinkType is the registered sink type the tests build through beacon.New.
+// capSinkType is the registered sink type the tests build through courier.New.
 // A package-qualified name keeps it from colliding with any real sink type.
 const capSinkType = "beacon_test.capsink"
 
@@ -67,7 +67,7 @@ var (
 // factory-built backend back to its Capture, and it is the only way to observe
 // Report fan-out without adding a test-only construction path to beacon itself.
 func init() {
-	beacon.RegisterSink(capSinkType, func(settings map[string]string, _ beacon.SecretResolver) (beacon.TelemetrySink, error) {
+	courier.RegisterSink(capSinkType, func(settings map[string]string, _ courier.SecretResolver) (courier.TelemetrySink, error) {
 		id := settings["id"]
 		capMu.Lock()
 		s := capSinks[id]
@@ -79,22 +79,22 @@ func init() {
 	})
 }
 
-// newReportBeacon builds a *beacon.Beacon whose Telemetry sinks are exactly the
-// given capSinks, in order, through the ordinary beacon.New path.
-func newReportBeacon(t *testing.T, sinks ...*capSink) *beacon.Beacon {
+// newReportBeacon builds a *courier.Beacon whose Telemetry sinks are exactly the
+// given capSinks, in order, through the ordinary courier.New path.
+func newReportBeacon(t *testing.T, sinks ...*capSink) *courier.Beacon {
 	t.Helper()
-	tcs := make([]beacon.TelemetryConfig, 0, len(sinks))
+	tcs := make([]courier.TelemetryConfig, 0, len(sinks))
 	for _, s := range sinks {
 		capMu.Lock()
 		capSeq++
 		id := fmt.Sprintf("sink-%d", capSeq)
 		capSinks[id] = s
 		capMu.Unlock()
-		tcs = append(tcs, beacon.TelemetryConfig{Type: capSinkType, Settings: map[string]string{"id": id}})
+		tcs = append(tcs, courier.TelemetryConfig{Type: capSinkType, Settings: map[string]string{"id": id}})
 	}
-	b, err := beacon.New(beacon.Config{Telemetry: tcs}, nil)
+	b, err := courier.New(courier.Config{Telemetry: tcs}, nil)
 	if err != nil {
-		t.Fatalf("beacon.New: %v", err)
+		t.Fatalf("courier.New: %v", err)
 	}
 	return b
 }
@@ -109,7 +109,7 @@ func TestReportFansOutToAllSinks(t *testing.T) {
 	s2 := &capSink{name: "sink-b"}
 	b := newReportBeacon(t, s1, s2)
 
-	h := beacon.Health{Name: "kimai-backup", OK: false, Message: "restic exited 1"}
+	h := courier.Health{Name: "kimai-backup", OK: false, Message: "restic exited 1"}
 	if err := b.Report(ctx, h); err != nil {
 		t.Fatalf("Report: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestReportOneSinkFailingStillAttemptsOthers(t *testing.T) {
 	healthy := &capSink{name: "healthy"}
 	b := newReportBeacon(t, failing, healthy)
 
-	err := b.Report(ctx, beacon.Health{Name: "svc", OK: true})
+	err := b.Report(ctx, courier.Health{Name: "svc", OK: true})
 	if err == nil {
 		t.Fatal("expected Report to surface the failing sink's error")
 	}
@@ -156,7 +156,7 @@ func TestReportJoinsSinkErrors(t *testing.T) {
 	s2 := &capSink{name: "two", err: err2}
 	b := newReportBeacon(t, s1, s2)
 
-	err := b.Report(ctx, beacon.Health{Name: "svc"})
+	err := b.Report(ctx, courier.Health{Name: "svc"})
 	if err == nil {
 		t.Fatal("expected a combined error when both sinks fail")
 	}
@@ -172,7 +172,7 @@ func TestReportJoinsSinkErrors(t *testing.T) {
 // sink is configured, matching the documented contract.
 func TestReportNoSinks(t *testing.T) {
 	b := newReportBeacon(t)
-	if err := b.Report(context.Background(), beacon.Health{Name: "svc"}); err != nil {
+	if err := b.Report(context.Background(), courier.Health{Name: "svc"}); err != nil {
 		t.Fatalf("Report with no sinks should return nil, got %v", err)
 	}
 }

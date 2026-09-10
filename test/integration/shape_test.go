@@ -22,17 +22,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 func TestDiscordRequestShape(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type:     "discord",
 		Settings: map[string]string{"webhook_secret": "webhook"},
 	}
 	resolve := literalResolver(map[string]string{"webhook": c.URL()})
-	n := beacon.Notification{Title: "Disk full", Body: "/data is at 95%", Level: beacon.LevelError}
+	n := courier.Notification{Title: "Disk full", Body: "/data is at 95%", Level: courier.LevelError}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -74,12 +74,12 @@ func TestDiscordRequestShape(t *testing.T) {
 // with, so Send should post plain content instead of an empty embed.
 func TestDiscordRequestShapeNoTitle(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type:     "discord",
 		Settings: map[string]string{"webhook_secret": "webhook"},
 	}
 	resolve := literalResolver(map[string]string{"webhook": c.URL()})
-	n := beacon.Notification{Body: "just a body, no title", Level: beacon.LevelInfo}
+	n := courier.Notification{Body: "just a body, no title", Level: courier.LevelInfo}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -99,12 +99,12 @@ func TestDiscordRequestShapeNoTitle(t *testing.T) {
 
 func TestSlackRequestShape(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type:     "slack",
 		Settings: map[string]string{"webhook_secret": "webhook"},
 	}
 	resolve := literalResolver(map[string]string{"webhook": c.URL()})
-	n := beacon.Notification{Title: "Backup finished", Body: "12.3GB in 4m", Level: beacon.LevelInfo}
+	n := courier.Notification{Title: "Backup finished", Body: "12.3GB in 4m", Level: courier.LevelInfo}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -138,12 +138,12 @@ func TestSlackRequestShape(t *testing.T) {
 // webhook secret and a different Level (exercising the "warning" color).
 func TestMattermostRequestShape(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type:     "mattermost",
 		Settings: map[string]string{"webhook_secret": "webhook"},
 	}
 	resolve := literalResolver(map[string]string{"webhook": c.URL()})
-	n := beacon.Notification{Title: "Disk usage high", Body: "82% on /var", Level: beacon.LevelWarning}
+	n := courier.Notification{Title: "Disk usage high", Body: "82% on /var", Level: courier.LevelWarning}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -171,7 +171,7 @@ func TestMattermostRequestShape(t *testing.T) {
 func TestWebhookRequestShape(t *testing.T) {
 	c := newCatcher(t)
 	const signingKey = "s3cr3t-signing-key"
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "webhook",
 		Settings: map[string]string{
 			"url_secret":  "url",
@@ -179,10 +179,10 @@ func TestWebhookRequestShape(t *testing.T) {
 		},
 	}
 	resolve := literalResolver(map[string]string{"url": c.URL(), "sign": signingKey})
-	n := beacon.Notification{
+	n := courier.Notification{
 		Title: "Job failed",
 		Body:  "exit code 1",
-		Level: beacon.LevelError,
+		Level: courier.LevelError,
 		Tags:  []string{"ci"},
 		Fields: map[string]string{
 			"job": "nightly",
@@ -239,7 +239,7 @@ func TestWebhookRequestShape(t *testing.T) {
 func TestTelegramRequestShape(t *testing.T) {
 	c := newCatcher(t)
 	const token = "123456:AAExampleTelegramBotToken-abcXYZ"
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "telegram",
 		Settings: map[string]string{
 			"chat_id":      "-100123456789",
@@ -248,7 +248,7 @@ func TestTelegramRequestShape(t *testing.T) {
 		},
 	}
 	resolve := literalResolver(map[string]string{"token": token})
-	n := beacon.Notification{Title: "Deploy done", Body: "v1.2.3 is live", Level: beacon.LevelInfo}
+	n := courier.Notification{Title: "Deploy done", Body: "v1.2.3 is live", Level: courier.LevelInfo}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestTelegramRequestShape(t *testing.T) {
 
 func TestPushoverRequestShape(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "pushover",
 		Settings: map[string]string{
 			"token_secret": "token",
@@ -290,7 +290,7 @@ func TestPushoverRequestShape(t *testing.T) {
 		},
 	}
 	resolve := literalResolver(map[string]string{"token": "apptok", "user": "userkey"})
-	n := beacon.Notification{Title: "Low disk", Body: "5% free", Level: beacon.LevelWarning}
+	n := courier.Notification{Title: "Low disk", Body: "5% free", Level: courier.LevelWarning}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -332,7 +332,7 @@ func TestMatrixRequestShape(t *testing.T) {
 	c := newCatcher(t)
 	const roomID = "!abc123:matrix.org"
 	const token = "syt_abcdef_token"
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "matrix",
 		Settings: map[string]string{
 			"homeserver":   c.URL(),
@@ -341,7 +341,7 @@ func TestMatrixRequestShape(t *testing.T) {
 		},
 	}
 	resolve := literalResolver(map[string]string{"token": token})
-	n := beacon.Notification{Title: "Alert", Body: "something happened", Level: beacon.LevelError}
+	n := courier.Notification{Title: "Alert", Body: "something happened", Level: courier.LevelError}
 	if err := sendNotification(t, cfg, resolve, n); err != nil {
 		t.Fatalf("Notify: %v", err)
 	}
@@ -386,7 +386,7 @@ func TestMatrixRequestShape(t *testing.T) {
 
 func TestGatusReportShape(t *testing.T) {
 	c := newCatcher(t)
-	cfg := beacon.TelemetryConfig{
+	cfg := courier.TelemetryConfig{
 		Type: "gatus",
 		Settings: map[string]string{
 			"url":          c.URL(),
@@ -395,7 +395,7 @@ func TestGatusReportShape(t *testing.T) {
 		},
 	}
 	resolve := literalResolver(map[string]string{"token": "gatus-tok"})
-	h := beacon.Health{Name: "nightly-backup", OK: false, Message: "exit code 1", Duration: 250 * time.Millisecond}
+	h := courier.Health{Name: "nightly-backup", OK: false, Message: "exit code 1", Duration: 250 * time.Millisecond}
 	if err := sendHealth(t, cfg, resolve, h); err != nil {
 		t.Fatalf("Report: %v", err)
 	}
@@ -422,14 +422,14 @@ func TestGatusReportShape(t *testing.T) {
 
 	// A successful report should carry no "error" query parameter at all.
 	c2 := newCatcher(t)
-	cfg2 := beacon.TelemetryConfig{
+	cfg2 := courier.TelemetryConfig{
 		Type: "gatus",
 		Settings: map[string]string{
 			"url":          c2.URL(),
 			"endpoint_key": "group_myservice",
 		},
 	}
-	hOK := beacon.Health{Name: "nightly-backup", OK: true, Duration: 10 * time.Millisecond}
+	hOK := courier.Health{Name: "nightly-backup", OK: true, Duration: 10 * time.Millisecond}
 	if err := sendHealth(t, cfg2, literalResolver(nil), hOK); err != nil {
 		t.Fatalf("Report (success): %v", err)
 	}

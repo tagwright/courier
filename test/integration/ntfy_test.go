@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 // ntfyMessage is the subset of ntfy's JSON message format this test cares
@@ -43,17 +43,17 @@ func TestNtfyDelivery(t *testing.T) {
 	server := mustEnv(t, "NTFY_URL")
 	topic := randomTopic(t)
 
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "ntfy",
 		Settings: map[string]string{
 			"server": server,
 			"topic":  topic,
 		},
 	}
-	n := beacon.Notification{
+	n := courier.Notification{
 		Title: "beacon ntfy integration test",
 		Body:  "this message proves the ntfy backend delivers",
-		Level: beacon.LevelWarning,
+		Level: courier.LevelWarning,
 		Tags:  []string{"warning", "robot"},
 	}
 	if err := sendNotification(t, cfg, literalResolver(nil), n); err != nil {

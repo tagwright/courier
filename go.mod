@@ -1,4 +1,4 @@
-module github.com/tagwright/beacon
+module github.com/tagwright/courier
 
 go 1.23
 

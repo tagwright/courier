@@ -39,7 +39,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 // mustEnv reads an environment variable set by run.sh, skipping the test
@@ -55,24 +55,24 @@ func mustEnv(t *testing.T, name string) string {
 	return v
 }
 
-// literalResolver returns a beacon.SecretResolver that treats the secret
+// literalResolver returns a courier.SecretResolver that treats the secret
 // "name" as the literal value: settings in these tests name a value
 // directly (e.g. "topic-abc123") rather than indirecting through a real
 // secret store, since resolveByName just needs to prove backends resolve
 // at send time, not exercise a particular secret store.
-func literalResolver(values map[string]string) beacon.SecretResolver {
+func literalResolver(values map[string]string) courier.SecretResolver {
 	return func(name string) (string, error) {
 		return values[name], nil
 	}
 }
 
 // sendNotification builds a Beacon with a single channel of cfg.Type and
-// sends n through it via the real public API (beacon.New then Notify), the
+// sends n through it via the real public API (courier.New then Notify), the
 // same path a host program goes through. It never reaches into Beacon's
 // internals, since none are exported for this purpose.
-func sendNotification(t *testing.T, cfg beacon.ChannelConfig, resolve beacon.SecretResolver, n beacon.Notification) error {
+func sendNotification(t *testing.T, cfg courier.ChannelConfig, resolve courier.SecretResolver, n courier.Notification) error {
 	t.Helper()
-	b, err := beacon.New(beacon.Config{Channels: []beacon.ChannelConfig{cfg}}, resolve)
+	b, err := courier.New(courier.Config{Channels: []courier.ChannelConfig{cfg}}, resolve)
 	if err != nil {
 		t.Fatalf("building %s backend: %v", cfg.Type, err)
 	}
@@ -82,10 +82,10 @@ func sendNotification(t *testing.T, cfg beacon.ChannelConfig, resolve beacon.Sec
 }
 
 // sendHealth builds a Beacon with a single telemetry sink of cfg.Type and
-// reports h through it via the real public API (beacon.New then Report).
-func sendHealth(t *testing.T, cfg beacon.TelemetryConfig, resolve beacon.SecretResolver, h beacon.Health) error {
+// reports h through it via the real public API (courier.New then Report).
+func sendHealth(t *testing.T, cfg courier.TelemetryConfig, resolve courier.SecretResolver, h courier.Health) error {
 	t.Helper()
-	b, err := beacon.New(beacon.Config{Telemetry: []beacon.TelemetryConfig{cfg}}, resolve)
+	b, err := courier.New(courier.Config{Telemetry: []courier.TelemetryConfig{cfg}}, resolve)
 	if err != nil {
 		t.Fatalf("building %s sink: %v", cfg.Type, err)
 	}

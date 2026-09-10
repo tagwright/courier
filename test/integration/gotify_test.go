@@ -8,7 +8,7 @@ package integration
 import (
 	"testing"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 // gotifyAdminUser and gotifyAdminPass are the default credentials the
@@ -60,17 +60,17 @@ func TestGotifyDelivery(t *testing.T) {
 		t.Fatal("gotify: client token is empty")
 	}
 
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "gotify",
 		Settings: map[string]string{
 			"server":       server,
 			"token_secret": "apptoken",
 		},
 	}
-	n := beacon.Notification{
+	n := courier.Notification{
 		Title: "beacon gotify integration test",
 		Body:  "this message proves the gotify backend delivers",
-		Level: beacon.LevelError,
+		Level: courier.LevelError,
 	}
 	resolve := literalResolver(map[string]string{"apptoken": app.Token})
 	if err := sendNotification(t, cfg, resolve, n); err != nil {

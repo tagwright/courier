@@ -1,6 +1,6 @@
 # Testing
 
-Before this harness existed, none of beacon's channels had ever sent a message: the
+Before this harness existed, none of courier's channels had ever sent a message: the
 package had unit-free confidence only. This document describes the integration
 harness under `test/integration/` that actually proves delivery, and is blunt about
 where it can't.
@@ -9,8 +9,8 @@ where it can't.
 
 **Tier 1 — delivery-proven.** For channels with a real, self-hostable open-source
 server, the harness runs that server in a throwaway container, sends a
-`Notification` through beacon's real backend, and then reads the message back out
-through the server's own API. This proves an end-to-end round trip: beacon's
+`Notification` through courier's real backend, and then reads the message back out
+through the server's own API. This proves an end-to-end round trip: courier's
 request was accepted, parsed, and stored the way the receiving service expects.
 
 **Tier 2 — request-shape-verified.** The remaining channels only have a hosted,
@@ -20,13 +20,13 @@ webhook receiver; Gatus). This harness has no real account or instance for any o
 these, so it cannot prove a human would ever see the message. Instead it points
 each backend at an in-process HTTP catcher the test binary itself runs (see
 `catcher` in `test/integration/harness_test.go`) and asserts the outbound request
-beacon builds is correct: method, path, headers, and the JSON or form body,
+courier builds is correct: method, path, headers, and the JSON or form body,
 including the webhook backend's HMAC `X-Beacon-Signature`.
 
 **Be clear about what tier 2 does not prove.** A request that is shaped exactly
 right can still be rejected by the real service for reasons this harness cannot
 see: an expired token, a renamed field, a webhook platform quietly changing its
-accepted payload. Tier 2 is confidence that beacon assembled the request it meant
+accepted payload. Tier 2 is confidence that courier assembled the request it meant
 to, not confidence a person receives it. Closing that gap for any of these channels
 means testing against the real service with a real account, which is out of scope
 for an automated, self-cleaning harness.

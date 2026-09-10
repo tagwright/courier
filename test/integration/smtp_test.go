@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tagwright/beacon"
+	"github.com/tagwright/courier"
 )
 
 type mailpitMessageSummary struct {
@@ -36,7 +36,7 @@ func TestSMTPDelivery(t *testing.T) {
 	apiURL := mustEnv(t, "MAILPIT_HTTP_URL")
 
 	subject := "beacon smtp integration test " + randomTopic(t)
-	cfg := beacon.ChannelConfig{
+	cfg := courier.ChannelConfig{
 		Type: "smtp",
 		Settings: map[string]string{
 			"host":       host,
@@ -46,10 +46,10 @@ func TestSMTPDelivery(t *testing.T) {
 			"encryption": "none",
 		},
 	}
-	n := beacon.Notification{
+	n := courier.Notification{
 		Title: subject,
 		Body:  "this message proves the smtp backend delivers",
-		Level: beacon.LevelInfo,
+		Level: courier.LevelInfo,
 	}
 	if err := sendNotification(t, cfg, literalResolver(nil), n); err != nil {
 		t.Fatalf("Notify: %v", err)
