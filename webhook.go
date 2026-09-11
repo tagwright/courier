@@ -30,25 +30,33 @@ type webhookPayload struct {
 // WebhookBackend sends notifications as a JSON POST to an arbitrary URL,
 // for services with no dedicated backend of their own. If a signing secret
 // is configured, the request carries an X-Beacon-Signature header so the
-// receiver can verify it came from this courier.
+// receiver can verify it came from this courier. If a bearer secret is
+// configured, the request carries an Authorization: Bearer header, for a
+// receiver behind OAuth2 or another bearer-token scheme.
 type WebhookBackend struct {
-	urlSetting  string
-	signSetting string
-	resolve     SecretResolver
+	urlSetting    string
+	signSetting   string
+	bearerSetting string
+	resolve       SecretResolver
 }
 
 // newWebhookBackendFromSettings builds the registered "webhook" backend.
 // The secret "url_secret" names the target URL and is required. The
 // optional secret "sign_secret" names an HMAC-SHA256 key; when present,
-// every request is signed.
+// every request is signed. The optional secret "bearer_secret" names an
+// access token; when present, every request carries an
+// "Authorization: Bearer <token>" header. The token is resolved through the
+// injected resolver at send time. courier only uses a token it is handed; it
+// never runs the OAuth flow, and never acquires, refreshes, or stores one.
 func newWebhookBackendFromSettings(settings map[string]string, resolve SecretResolver) (Backend, error) {
 	if _, err := requiredSetting(settings, "url_secret"); err != nil {
 		return nil, err
 	}
 	return &WebhookBackend{
-		urlSetting:  settings["url_secret"],
-		signSetting: settings["sign_secret"],
-		resolve:     resolve,
+		urlSetting:    settings["url_secret"],
+		signSetting:   settings["sign_secret"],
+		bearerSetting: settings["bearer_secret"],
+		resolve:       resolve,
 	}, nil
 }
 
@@ -79,7 +87,7 @@ func (b *WebhookBackend) Send(ctx context.Context, n Notification) error {
 		return fmt.Errorf("encoding JSON body: %w", err)
 	}
 
-	var headers map[string]string
+	headers := map[string]string{}
 	if b.signSetting != "" {
 		key, err := resolveSecretByName(b.resolve, b.signSetting)
 		if err != nil {
@@ -87,9 +95,14 @@ func (b *WebhookBackend) Send(ctx context.Context, n Notification) error {
 		}
 		mac := hmac.New(sha256.New, []byte(key))
 		mac.Write(encoded)
-		headers = map[string]string{
-			"X-Beacon-Signature": hex.EncodeToString(mac.Sum(nil)),
+		headers["X-Beacon-Signature"] = hex.EncodeToString(mac.Sum(nil))
+	}
+	if b.bearerSetting != "" {
+		token, err := resolveSecretByName(b.resolve, b.bearerSetting)
+		if err != nil {
+			return err
 		}
+		headers["Authorization"] = "Bearer " + token
 	}
 
 	_, err = postJSONBytes(ctx, target, encoded, headers)

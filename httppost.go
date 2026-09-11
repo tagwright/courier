@@ -29,15 +29,16 @@ func init() {
 // exact bytes on the wire. Reach for "http" when a receiver dictates its own
 // payload shape.
 type HTTPBackend struct {
-	urlSetting  string // literal URL, or "" when urlSecret is used
-	urlSecret   string // secret name resolving to the URL, or ""
-	recipient   string
-	contentType string
-	body        *template.Template
+	urlSetting    string // literal URL, or "" when urlSecret is used
+	urlSecret     string // secret name resolving to the URL, or ""
+	bearerSecret  string // secret name resolving to a bearer token, or ""
+	recipient     string
+	contentType   string
+	body          *template.Template
 	successField  string
 	successEquals string
 	haveEquals    bool
-	resolve     SecretResolver
+	resolve       SecretResolver
 }
 
 // templateData is what a body template can reference. It is deliberately
@@ -77,6 +78,13 @@ var templateFuncs = template.FuncMap{
 //	url            the POST target (literal). Provide this OR url_secret.
 //	url_secret     names a secret resolving to the POST target, for a URL
 //	               that must not sit in config in the clear.
+//	bearer_secret  optional. Names a secret resolving to an access token; when
+//	               set, every request carries an "Authorization: Bearer
+//	               <token>" header, for a target behind OAuth2 or another
+//	               bearer-token scheme. The token is resolved through the
+//	               injected resolver at send time. courier only uses a token it
+//	               is handed; it never runs the OAuth flow, and never acquires,
+//	               refreshes, or stores one.
 //	recipient      an optional value exposed to the template as .Recipient.
 //	body_template  REQUIRED. A text/template rendered into the request body,
 //	               with .Message/.Title/.Body/.Level/.Recipient/.Tags/.Fields
@@ -116,6 +124,7 @@ func newHTTPBackendFromSettings(settings map[string]string, resolve SecretResolv
 	return &HTTPBackend{
 		urlSetting:    url,
 		urlSecret:     urlSecret,
+		bearerSecret:  settings["bearer_secret"],
 		recipient:     settings["recipient"],
 		contentType:   contentType,
 		body:          tmpl,
@@ -163,6 +172,13 @@ func (b *HTTPBackend) Send(ctx context.Context, n Notification) error {
 		return fmt.Errorf("building request: %w", err)
 	}
 	req.Header.Set("Content-Type", b.contentType)
+	if b.bearerSecret != "" {
+		token, err := resolveSecretByName(b.resolve, b.bearerSecret)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	respBody, err := doRequest(req)
 	if err != nil {

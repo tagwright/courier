@@ -32,6 +32,25 @@ when something happens. It imports nothing from any particular application. A ho
 wires its own events into it and provides a function that resolves secret names to
 values, so courier never assumes where secrets live.
 
+## OAuth access tokens
+
+Some targets need an OAuth2 access token rather than a password. The SMTP channel
+speaks XOAUTH2, which Gmail and O365 now require since they disabled basic-auth
+SMTP, and the webhook and templatable HTTP channels can send an
+`Authorization: Bearer` header for a receiver behind a bearer-token scheme.
+
+In every case the token is just another injected secret: courier resolves it
+through the host's secret resolver at send time, the same way it resolves an SMTP
+password, and uses it as handed. courier never runs the OAuth flow. It does not
+acquire, refresh, or store a token, and it holds no background loop. Keeping a
+valid token available to the resolver is the host's job.
+
+- SMTP XOAUTH2: set `auth: xoauth2` on the smtp channel, with `username_secret`
+  (the account) and `token_secret` (the access token). The default auth mode is
+  unchanged, so existing username/password relays need no edits.
+- Webhook / HTTP bearer: set `bearer_secret` on the webhook or http channel to the
+  secret naming the token.
+
 ## Testing
 
 `test/integration/` holds courier's delivery tests: real end-to-end sends against
