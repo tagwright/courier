@@ -7,7 +7,7 @@ something needs attention, and push health and status to a monitor on a schedule
 > Naming note: this library used to be called beacon. The name "beacon" is being
 > handed to a forthcoming label-driven notification service, and courier is the
 > delivery library that service will use to actually send messages. If you are
-> looking for the service, this is not it; this is the library it builds on.
+> looking for the service, this is not it. This is the library it builds on.
 
 It is deliberately narrow. courier knows about notification channels and telemetry
 sinks and nothing else, so it drops into any project without dragging along
@@ -20,10 +20,17 @@ will move until it settles.
 ## Two axes
 
 - Notifications: alerts to the channels people actually watch, including email,
-  ntfy, Gotify, Telegram, Discord, Slack, Mattermost, Pushover, and Matrix, with a
+  [ntfy](https://ntfy.sh), [Gotify](https://gotify.net),
+  [Telegram](https://core.telegram.org/bots), [Discord](https://discord.com),
+  [Slack](https://slack.com), [Mattermost](https://mattermost.com),
+  [Pushover](https://pushover.net), and [Matrix](https://matrix.org), with a
   generic webhook or a templatable HTTP channel for anything else.
-- Telemetry: health and status push to a monitor, starting with Gatus external
-  endpoints.
+- Telemetry: health and status push to a monitor, starting with
+  [Gatus](https://github.com/TwiN/gatus) external endpoints.
+
+## Install
+
+    go get github.com/tagwright/courier
 
 ## Design
 
@@ -31,6 +38,9 @@ courier is configured through a plain struct and returns a small interface you c
 when something happens. It imports nothing from any particular application. A host
 wires its own events into it and provides a function that resolves secret names to
 values, so courier never assumes where secrets live.
+
+Every channel and telemetry sink, with the settings and config keys it reads, is
+listed in [docs/CHANNELS.md](docs/CHANNELS.md).
 
 ## OAuth access tokens
 
