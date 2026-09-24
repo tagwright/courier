@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-//go:build integration
-
 // Package integration holds beacon's first real delivery tests: they build
 // each backend the same way a host program would, send a real
 // Notification or Health through it, and check what actually arrived.

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 techgaud
 
-//go:build integration
-
 // Tier 2 tests: discord, slack, mattermost, webhook, telegram, pushover,
 // matrix, and the gatus telemetry sink all need a real third-party account
 // or instance to prove actual delivery, which this harness cannot obtain on

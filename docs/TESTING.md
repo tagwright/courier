@@ -91,9 +91,15 @@ Flags:
 - `--go-image IMAGE` — run the tests in a different Go image (default
   `golang:1.23`).
 
-The tests themselves live behind the `integration` build tag, so `go build ./...`,
-`go vet ./...`, and `go test ./...` (what CI runs on every push) never touch them.
-Running `go test -tags=integration ./test/integration/...` directly, outside
-`run.sh`, will skip every test with a clear message, since the environment
-variables `run.sh` sets (`NTFY_URL`, `GOTIFY_URL`, `MAILPIT_SMTP_HOST`,
-`MAILPIT_SMTP_PORT`, `MAILPIT_HTTP_URL`) won't be set.
+The tier 1 delivery tests live behind the `integration` build tag, because they
+need the throwaway containers `run.sh` starts, so `go build ./...`, `go vet ./...`,
+and `go test ./...` (what CI runs on every push) never touch them. Running
+`go test -tags=integration ./test/integration/...` directly, outside `run.sh`,
+will skip every tier 1 test with a clear message, since the environment variables
+`run.sh` sets (`NTFY_URL`, `GOTIFY_URL`, `MAILPIT_SMTP_HOST`, `MAILPIT_SMTP_PORT`,
+`MAILPIT_HTTP_URL`) won't be set.
+
+The tier 2 request-shape tests are hermetic: they need no container, no network,
+and no credentials, only the in-process catcher the test binary runs itself. They
+carry no build tag, so plain `go test ./...` and CI run them on every push. The
+`-tags=integration` run includes them too, alongside the tier 1 tests.
