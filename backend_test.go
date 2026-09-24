@@ -4,7 +4,9 @@
 package courier_test
 
 import (
+	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -116,6 +118,45 @@ func TestRegisterBackendDuplicatePanics(t *testing.T) {
 		}
 	}()
 	courier.RegisterBackend(typ, ctor)
+}
+
+// TestNewNilResolverSubstitutesSafeDefault proves the nil-resolver guard in New
+// (task #513): a host with no secrets to offer may pass a nil SecretResolver, and
+// New must neither panic nor hand that nil straight to a factory. Instead it
+// substitutes a resolver that errors on every lookup, so backend and sink
+// factories can call resolve unconditionally. This registers a backend that
+// captures the resolver it was handed, then confirms the captured resolver is
+// non-nil, that it errors on any lookup (the safe default), and that the Beacon
+// New returns is usable.
+func TestNewNilResolverSubstitutesSafeDefault(t *testing.T) {
+	const typ = "backend_test.captures-resolver"
+	var captured courier.SecretResolver
+	courier.RegisterBackend(typ, func(_ map[string]string, resolve courier.SecretResolver) (courier.Backend, error) {
+		captured = resolve
+		return courier.NewLogBackend(io.Discard), nil
+	})
+
+	b, err := courier.New(courier.Config{Channels: []courier.ChannelConfig{
+		{Type: typ},
+	}}, nil)
+	if err != nil {
+		t.Fatalf("New with a nil resolver returned an error: %v", err)
+	}
+	if b == nil {
+		t.Fatal("New with a nil resolver returned a nil Beacon")
+	}
+	if captured == nil {
+		t.Fatal("New handed the factory a nil resolver; a factory that calls resolve would panic")
+	}
+	if _, err := captured("anything"); err == nil {
+		t.Error("the substituted resolver should error on every lookup, but returned nil")
+	}
+
+	// The Beacon must be usable: Notify must not panic and must succeed through
+	// the log floor, which needs no secrets.
+	if err := b.Notify(context.Background(), courier.Notification{Title: "hello", Level: courier.LevelInfo}); err != nil {
+		t.Errorf("Notify on a Beacon built with a nil resolver failed: %v", err)
+	}
 }
 
 // TestRegisterSinkDuplicatePanics is the sink-side counterpart.
