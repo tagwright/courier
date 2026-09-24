@@ -69,6 +69,9 @@ self-hostable server, and outbound-request-shape checks against an in-process
 catcher for the rest. See [docs/TESTING.md](docs/TESTING.md) for the coverage
 matrix and how to run it.
 
+For how courier handles credentials and where it sends them, and what it does
+not defend against, see [docs/SECURITY.md](docs/SECURITY.md).
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE). Each source file carries an
