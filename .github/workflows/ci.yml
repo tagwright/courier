@@ -29,6 +29,14 @@ jobs:
       - name: Test
         run: go test ./...
 
+      # Enforceability layer (Testing Standard, task #552): skip budget,
+      # coverage floor, deadcode (auto-rooted at the test binaries because
+      # courier is a library), and the docs/TESTING.md + LAST-RUN gate-checks.
+      # All static / go-test-level, so they run here on the hosted leg. See
+      # test/enforce/README.md.
+      - name: Enforceability checks
+        run: test/enforce/run-all.sh
+
   harness:
     # The live delivery harness (Testing Standard, task #548). courier is a
     # notification LIBRARY: run.sh needs a Docker daemon to stand up throwaway

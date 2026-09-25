@@ -1,0 +1,22 @@
+# Skip budget for courier (Testing Standard enforceability layer, task #552).
+#
+# INTEGRATION_SKIP_BUDGET is the most t.Skip/t.Skipf/t.SkipNow calls allowed in
+# //go:build integration test files. These are the ALLOWED resource-absent
+# skips: each skips cleanly when its resource (a live ntfy/gotify/mailpit server
+# started by test/integration/run.sh) is absent, and runs for real under the
+# harness. This number is a ratchet: removing a skip never breaks the build.
+# Raising it is a reviewed change that must name the new resource-absent skip it
+# admits.
+#
+# Skips in NON-integration test files (the always-run `go test ./...` leg) are
+# banned outright, budget 0, enforced by the script with no entry here: that leg
+# has no absent resource to justify a skip, so a skip there is skip-to-get-green.
+#
+# Today's 1 integration-leg skip:
+#   test/integration/harness_integration_test.go   (mustEnv: skips when the
+#     NTFY_URL/GOTIFY_URL/MAILPIT_* env vars run.sh sets are absent). This helper
+#     and its skip were moved out of the untagged harness_test.go into the
+#     integration-tagged file so the skip lands in this leg, not the always-run
+#     leg, per the standard's "move misplaced resource-gated tests behind the
+#     integration tag rather than raising the budget."
+INTEGRATION_SKIP_BUDGET=1

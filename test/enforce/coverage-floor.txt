@@ -1,0 +1,30 @@
+# Statement-coverage floors for courier (Testing Standard enforceability layer,
+# task #552). Format: "<package> <floor-percent>", one per line, blank lines and
+# #-comments ignored. A path of "." is the flat root package.
+#
+# courier is a LIBRARY (module github.com/tagwright/courier, no main package), so
+# there is no internal/daemon wiring to floor. The standard's "a library owes
+# its own coverage, not just its consumers'" rule applies instead: floor the
+# library's own meaningful packages at their measured coverage.
+#
+#   .           the root courier package: every notification backend and
+#               telemetry sink, New/Notify/Report, the HTTP helpers, secret
+#               resolution. The whole delivery surface, so it is floored.
+#   beacontest  the shipped capturing-backend fake (the notifier-side analogue of
+#               core/runtime/runtimetest), floored so its own tests keep it
+#               exercised.
+#
+# test/integration (package integration) is test-only scaffolding, not shipped
+# library code, so it is not floored here.
+#
+# This is a ratchet: a floor may only RISE. Raise a number when coverage climbs
+# so a later regression trips the gate; never lower one to make a regression
+# pass (that is the "never weaken a gate" rule the standard forbids).
+#
+# Baselines measured 2026-09-25 on golang:1.25 (go1.25.8, deterministic under
+# -count=1), floored to a whole percent at/below the measured value to absorb
+# toolchain rounding:
+#   .           measured 51.6%
+#   beacontest  measured 82.4%
+. 51
+beacontest 82

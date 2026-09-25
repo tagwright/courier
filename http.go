@@ -169,15 +169,3 @@ func resolveSecretByName(resolve SecretResolver, name string) (string, error) {
 	}
 	return val, nil
 }
-
-// resolveRequiredSecret reads the secret name out of settings[key] and
-// resolves it through resolve. It errors if the setting naming the secret is
-// absent, or if the secret it names resolves to an empty value, so a
-// backend never sends with a silently-missing credential.
-func resolveRequiredSecret(settings map[string]string, key string, resolve SecretResolver) (string, error) {
-	name, err := requiredSetting(settings, key)
-	if err != nil {
-		return "", err
-	}
-	return resolveSecretByName(resolve, name)
-}

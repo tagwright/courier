@@ -25,33 +25,18 @@
 package integration
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/tagwright/courier"
 )
-
-// mustEnv reads an environment variable set by run.sh, skipping the test
-// with a clear message if it is absent so a stray `go test -tags=integration`
-// run outside the harness fails obviously instead of with a confusing
-// connection-refused error.
-func mustEnv(t *testing.T, name string) string {
-	t.Helper()
-	v := os.Getenv(name)
-	if v == "" {
-		t.Skipf("%s not set; run via test/integration/run.sh", name)
-	}
-	return v
-}
 
 // literalResolver returns a courier.SecretResolver that treats the secret
 // "name" as the literal value: settings in these tests name a value
@@ -155,83 +140,10 @@ func (c *catcher) last(t *testing.T) capturedRequest {
 	return c.reqs[len(c.reqs)-1]
 }
 
-// count returns how many requests the catcher has recorded so far.
-func (c *catcher) count() int {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return len(c.reqs)
-}
-
 // decodeJSON unmarshals req.Body into v, failing the test on error.
 func decodeJSON(t *testing.T, body []byte, v any) {
 	t.Helper()
 	if err := json.Unmarshal(body, v); err != nil {
 		t.Fatalf("decoding JSON body %q: %v", body, err)
-	}
-}
-
-// defaultWait bounds how long a tier 1 test polls a real server's API for a
-// message to arrive, before failing.
-const defaultWait = 15 * time.Second
-
-// httpJSON does an HTTP request against target, optionally with basic auth
-// and a JSON request body, and decodes a JSON response into out (which may
-// be nil to discard the body). It fails the test on any transport error or
-// non-2xx status, since every caller in this harness needs a successful
-// call to proceed.
-func httpJSON(t *testing.T, method, target, user, pass string, reqBody, out any) {
-	t.Helper()
-	var body io.Reader
-	if reqBody != nil {
-		encoded, err := json.Marshal(reqBody)
-		if err != nil {
-			t.Fatalf("encoding request body: %v", err)
-		}
-		body = bytes.NewReader(encoded)
-	}
-	req, err := http.NewRequest(method, target, body)
-	if err != nil {
-		t.Fatalf("building request to %s: %v", target, err)
-	}
-	if reqBody != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if user != "" {
-		req.SetBasicAuth(user, pass)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("%s %s: %v", method, target, err)
-	}
-	defer resp.Body.Close()
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("reading response from %s: %v", target, err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		t.Fatalf("%s %s: status %d: %s", method, target, resp.StatusCode, respBody)
-	}
-	if out != nil {
-		if err := json.Unmarshal(respBody, out); err != nil {
-			t.Fatalf("decoding response from %s: %v (body: %s)", target, err, respBody)
-		}
-	}
-}
-
-// waitFor polls check every 200ms until it returns true or timeout elapses,
-// failing the test with msg on timeout. Used against real tier 1 servers
-// (ntfy, gotify, mailpit) whose ingestion is asynchronous relative to the
-// HTTP response beacon's Send already waited for.
-func waitFor(t *testing.T, timeout time.Duration, msg string, check func() bool) {
-	t.Helper()
-	deadline := time.Now().Add(timeout)
-	for {
-		if check() {
-			return
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for: %s", msg)
-		}
-		time.Sleep(200 * time.Millisecond)
 	}
 }
