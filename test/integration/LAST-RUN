@@ -1,0 +1,30 @@
+# Live integration harness attestation (tagwright Testing Standard, task #548).
+#
+# This file records the last full operator-run of the harness. courier's harness
+# (run.sh) drives only throwaway, self-hostable servers (ntfy, gotify, mailpit)
+# and in-process HTTP catchers, so every scenario is CI-gated on the hosted leg
+# (ci.yml) and needs no privileged self-hosted runner. Their attestation here is
+# therefore informational. The load-bearing rows would be an operator-run bucket:
+# paths that can only be exercised against a real external service with a real
+# account. courier has none, so operator_run is none.
+#
+# Were a real-service scenario ever added, its release job would assert `sha`
+# below equals the tagged commit exactly (test/enforce/check-last-run.sh), so an
+# operator-run row is only valid for the sha it was produced at.
+#
+# Regenerate with: test/integration/gen-last-run.sh   (after running the harness)
+
+sha: 0000000000000000000000000000000000000000
+date: unattested
+harness: run.sh
+
+# CI-gated scenarios: run by ci.yml on every push. Status here is informational.
+ci_gated: run.sh (tier 1 delivery + tier 2 request-shape), gated in CI
+
+# Operator-run bucket (permanent-exempt: real external services only). Each row
+# is <scenario>: <result> and must be regenerated at the release sha. Empty for
+# courier: every tier 1 scenario drives a throwaway self-hostable server and
+# every tier 2 scenario an in-process catcher, all CI-gated. A scenario against a
+# real, credentialed third-party account (a real Discord/Slack workspace, a real
+# Telegram bot), if ever added, lands here.
+operator_run: none

@@ -20,7 +20,7 @@
 #
 # Usage: test/integration/run.sh [--keep] [--go-image IMAGE]
 #   --keep             skip cleanup at the end (for debugging a failure)
-#   --go-image IMAGE   golang image to run the tests in (default golang:1.23)
+#   --go-image IMAGE   golang image to run the tests in (default golang:1.25)
 
 set -euo pipefail
 
@@ -28,7 +28,9 @@ HARNESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HARNESS_DIR/../.." && pwd)"
 
 KEEP=0
-GO_IMAGE="golang:1.23"
+# golang:1.25 matches go.mod's floor (go 1.25.0); an older image would force a
+# toolchain download at test time under GOTOOLCHAIN=auto.
+GO_IMAGE="golang:1.25"
 while [ $# -gt 0 ]; do
   case "$1" in
     --keep) KEEP=1; shift ;;

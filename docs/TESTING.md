@@ -79,7 +79,7 @@ test/integration/run.sh
 This starts `beacon-itest-ntfy`, `beacon-itest-gotify`, and `beacon-itest-mailpit`
 on a `beacon-itest-net` Docker network, waits for each to answer its own health
 endpoint, then runs `go test -tags=integration -v ./test/integration/...` inside a
-`golang:1.23` container attached to that same network. Every object the script
+`golang:1.25` container attached to that same network. Every object the script
 creates is named with the `beacon-itest-` prefix, and nothing else is touched.
 Cleanup runs on exit, whether the run succeeds, fails, or is interrupted, so a
 failed run doesn't leave containers or the network behind.
@@ -90,7 +90,7 @@ Flags:
   (`docker logs beacon-itest-ntfy`, etc.). Clean up manually afterward with
   `docker rm -f beacon-itest-ntfy beacon-itest-gotify beacon-itest-mailpit && docker network rm beacon-itest-net`.
 - `--go-image IMAGE` runs the tests in a different Go image (default
-  `golang:1.23`).
+  `golang:1.25`).
 
 The tier 1 delivery tests live behind the `integration` build tag, because they
 need the throwaway containers `run.sh` starts, so `go build ./...`, `go vet ./...`,

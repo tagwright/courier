@@ -13,10 +13,15 @@
 
 name: CI (self-hosted)
 
+# Trigger discipline (CI Runner page): push and manual only, on org-owned
+# branches, NEVER a fork pull_request. The tagwright GitHub repos are public and
+# this leg targets a privileged self-hosted runner, so triggering on a fork
+# pull_request would run outside contributors' code on the host -- the exact
+# host-compromise primitive the runner's trigger discipline forbids. Fork-PR
+# coverage stays on the hosted leg (ci.yml, ubuntu-latest), which also carries
+# courier's delivery harness.
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
   # Manual trigger, so the self-hosted smoke leg can be re-run from the
   # Actions UI without a code push (there is no other way to re-run a

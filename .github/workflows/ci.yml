@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/tagwright/*
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,3 +28,26 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+  harness:
+    # The live delivery harness (Testing Standard, task #548). courier is a
+    # notification LIBRARY: run.sh needs a Docker daemon to stand up throwaway
+    # self-hostable servers (ntfy, gotify, mailpit) and drive real deliveries
+    # against them, but it needs NO privilege, NO BPF, and never the production
+    # socket. GitHub-hosted ubuntu-latest ships a Docker daemon, so the harness
+    # runs here on the hosted leg rather than being forced onto the privileged
+    # self-hosted runner (which is reserved for socket/kernel tools like
+    # bathyscaphe and ballast). Runs on push and PR because it executes only our
+    # own code against public images; there is no privileged runner to protect.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run the live delivery harness
+        # run.sh starts the tier 1 servers, runs `go test -tags=integration`
+        # (tier 1 delivery-proven + tier 2 request-shape) in a golang:1.25
+        # container on the same network, and tears everything down after. Every
+        # object it creates carries the beacon-itest- prefix and nothing else is
+        # touched. See docs/TESTING.md.
+        run: test/integration/run.sh
