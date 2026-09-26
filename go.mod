@@ -2,6 +2,8 @@ module github.com/tagwright/courier
 
 go 1.25.0
 
+toolchain go1.25.14
+
 require github.com/wneessen/go-mail v0.8.1
 
 require (

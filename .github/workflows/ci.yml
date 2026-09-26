@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.14'
 
       - name: Build
         run: go build ./...
@@ -54,7 +54,7 @@ jobs:
 
       - name: Run the live delivery harness
         # run.sh starts the tier 1 servers, runs `go test -tags=integration`
-        # (tier 1 delivery-proven + tier 2 request-shape) in a golang:1.25
+        # (tier 1 delivery-proven + tier 2 request-shape) in a golang:1.25.14
         # container on the same network, and tears everything down after. Every
         # object it creates carries the beacon-itest- prefix and nothing else is
         # touched. See docs/TESTING.md.
